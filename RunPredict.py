@@ -2,7 +2,7 @@ from tkinter import *    #Import the tkinter library for GUI
 import tkinter.font as font
 from tkinter import ttk
 import sklearn           #Import sklearn for linear regression
-#import 
+#import sqlite 
 
 
 window=Tk()
@@ -10,11 +10,40 @@ window.state('zoomed')         #Define the window attributes
 window.title('RunPredict')
 window.geometry("1920x1080")
 window.configure(bg='#f0f0f0')
-
 Button_Font = font.Font(family='Microsoft Sans Serif',size=15)
 Label_Font = font.Font(family='Microsoft Sans Serif',size=15,weight="bold")
 
 
+def Create_Run_Window():
+    Conditions_Clicked = StringVar()
+    Run_Window=Toplevel(window)
+    Run_Window.title("Edit/Add Run")
+    Run_Window.geometry("400x500")
+    Run_Window.grab_set()
+    Run_Weather_Label=Label(Run_Window, text="Weather",font=Label_Font,bd=0)
+    Run_Conditions_Label=Label(Run_Window, text="Conditions: ",font=Button_Font,bd=0)
+    Run_Temperature_Label=Label(Run_Window, text="Temperature: ",font=Button_Font,bd=0)
+    Run_Humidity_Label=Label(Run_Window, text="Humidity: ",font=Button_Font,bd=0)
+    Run_Day_Label=Label(Run_Window, text="Day and Time",font=Label_Font,bd=0)
+    Run_Week_Label=Label(Run_Window, text="Day of Week: ",font=Button_Font,bd=0)
+    Run_Time_Label=Label(Run_Window, text="Time of Day: ",font=Button_Font,bd=0)
+    Run_Run_Label=Label(Run_Window, text="Run",font=Label_Font,bd=0)
+    Run_Distance_Label=Label(Run_Window, text="Distance: ",font=Button_Font,bd=0)
+    Run_Run_Time_Label=Label(Run_Window, text="Time: ",font=Button_Font,bd=0)
+    Run_Conditions_Drop=OptionMenu(Run_Window,Conditions_Clicked,"Sunny","Rainy")
+    Run_Weather_Label.place(x=0,y=0)
+    Run_Conditions_Label.place(x=10,y=40)
+    Run_Temperature_Label.place(x=10,y=80)
+    Run_Humidity_Label.place(x=10,y=120)
+    Run_Day_Label.place(x=0,y=160)
+    Run_Week_Label.place(x=10,y=200)
+    Run_Time_Label.place(x=10,y=240)
+    Run_Run_Label.place(x=0,y=280)
+    Run_Distance_Label.place(x=10,y=320)
+    Run_Run_Time_Label.place(x=10,y=360)
+    
+    Run_Conditions_Drop.place(x=200,y=40)
+    
 Time_Button_Border = Frame(window, highlightbackground = "black", highlightthickness = 2, bd=0)                  #Create a border for the time predict button and the button itself
 Time_Button=Button(Time_Button_Border,text="Predict Time From Conditions",font=Button_Font,bg='#edead9',relief=FLAT,bd=10,width=22)
 
@@ -61,7 +90,7 @@ Delete_Button_Border = Frame(Edit_Add_Delete_Border, highlightbackground = "blac
 
 
 Edit_Button=Button(Edit_Button_Border,text="Edit",font=Button_Font,bg='#b5d9fe',relief=FLAT,bd=5,width=7)
-Add_Button=Button(Add_Button_Border,text="Add",font=Button_Font,bg='#b5d9fe',relief=FLAT,bd=5,width=7)                              #Create the edit, add and delete buttons
+Add_Button=Button(Add_Button_Border,text="Add",font=Button_Font,bg='#b5d9fe',relief=FLAT,bd=5,width=7,command=Create_Run_Window)                              #Create the edit, add and delete buttons
 Delete_Button=Button(Delete_Button_Border,text="Delete",font=Button_Font,bg='#f9c7c7',relief=FLAT,bd=5,width=7)
 
 List_Box=Listbox(window)
