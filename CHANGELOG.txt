@@ -1,0 +1,3 @@
+CHANGELOG 19/07/2022
+
+- Added windows for adding runs and predicting conditions
