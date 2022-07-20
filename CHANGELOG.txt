@@ -1,3 +1,5 @@
-CHANGELOG 19/07/2022
+CHANGELOG 20/07/2022
 
-- Added windows for adding runs and predicting conditions
+- Added windows for adding and editing runs runs, predicting conditions and predicting time
+- Added buttons, inputs and labels for all windows
+- UI COMPLETED!
