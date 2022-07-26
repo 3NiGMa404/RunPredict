@@ -2,9 +2,15 @@ from tkinter import *    #Import the tkinter library for GUI
 import tkinter.font as font
 from tkinter import ttk
 import sklearn           #Import sklearn for linear regression
-#import sqlite 
-
-
+import sqlite3
+import math
+print("a")
+connection=sqlite3.connect('database.db')
+cur=connection.cursor()
+#cur.execute('''CREATE TABLE Runs(iD integer, Name text, Distance real, Time real, Conditions text, Temperature real, Humidity integer, Day text, HourOfDay integer, MinuteOfDay integer)''')
+#cur.execute('''DELETE FROM Runs''' )
+#connection.commit()
+print([i for i in cur.execute('''SELECT * FROM Runs;''')])
 window=Tk()
 window.state('zoomed')         #Define the window attributes
 window.title('RunPredict')
@@ -15,6 +21,44 @@ Label_Font = font.Font(family='Microsoft Sans Serif',size=15,weight="bold")     
 Add_Button_Photo = PhotoImage(file = "Add Button.PNG").subsample(2,2)
 Predict_Button_Photo = PhotoImage(file = "Predict Button.PNG").subsample(2,2)          #Get images for buttons
 
+List_Box_Frame_1=Frame(window, highlightbackground = "black", highlightthickness = 0, bd=0,width=1)
+List_Box_Frame_2=Frame(window, highlightbackground = "black", highlightthickness = 0, bd=0,width=1)
+List_Box_Frame_3=Frame(window, highlightbackground = "black", highlightthickness = 0, bd=0,width=1)
+List_Box_Frame_4=Frame(window, highlightbackground = "black", highlightthickness = 0, bd=0,width=1)
+
+List_Box=Listbox(List_Box_Frame_1)                   #Create list box
+List_Box_2=Listbox(List_Box_Frame_2)                   #Create list box
+List_Box_3=Listbox(List_Box_Frame_3)
+List_Box_4=Listbox(List_Box_Frame_4)
+
+
+def Update_Listbox():
+    counter=0
+    List_Box.delete(0,END)
+    List_Box_2.delete(0,END)
+    List_Box_3.delete(0,END)
+    List_Box_4.delete(0,END)
+    for item in cur.execute('''SELECT * FROM Runs;'''):  
+        List_Box.insert(counter,str(item[0]))
+        List_Box_2.insert(counter,str(item[1]))
+        List_Box_3.insert(counter,str(item[2])+"km")
+        List_Box_4.insert(counter,str(math.floor(item[3]/60))+":"+str(int(round(item[3]%60))).zfill(2))
+        counter+=1
+Update_Listbox()
+def Onselect(event):
+    selected=List_Box_2.curselection()
+    if len(selected)==0:
+        selected=List_Box_3.curselection()
+    if len(selected)==0:
+        selected=List_Box_4.curselection()
+    if len(selected)>0:
+        List_Box.select_set(selected)
+    
+List_Box_2.bind("<<ListboxSelect>>",Onselect)
+List_Box_3.bind("<<ListboxSelect>>",Onselect)
+List_Box_4.bind("<<ListboxSelect>>",Onselect)
+
+    
 def Create_Predict_Window():
     Conditions_Clicked = StringVar()
     Day_Clicked = StringVar()
@@ -67,8 +111,11 @@ def Create_Predict_Window():
     Predict_Colon_Label.place(x=235,y=230)
     Predict_Distance_Input.place(x=200,y=320)
     Predict_Add_Button.place(x=240,y=430)
-    
-def Create_Run_Window():
+def delete():
+    List_Box_2.curselection()
+    cur.execute('DELETE FROM Runs WHERE iD = '+str(List_Box.get(List_Box.curselection())))
+    Update_Listbox()
+def Create_Run_Window(add):
     Conditions_Clicked = StringVar()
     Day_Clicked = StringVar()
     Temperature_Var=StringVar(value=0)        #Instantiate variables
@@ -78,7 +125,17 @@ def Create_Run_Window():
     Distance_Var=StringVar(value=0)
     Time_Minute_Var=StringVar(value=0)
     Time_Second_Var=StringVar(value=0)
+    Run_Name=StringVar()
     
+    def Add():
+        try:
+            New_iD = [i for i in cur.execute('''SELECT MAX(iD) FROM Runs;''')][0][0]+1
+        except:
+            New_iD = 0
+        True_Time=int(Time_Minute_Var.get())*60 + int(Time_Second_Var.get())
+        cur.execute('INSERT INTO Runs VALUES ({},"{}",{},{},"{}",{},{},"{}",{},{});'.format(New_iD, Run_Name.get(),Distance_Var.get(),True_Time,Conditions_Clicked.get(),Temperature_Var.get(),Humidity_Var.get(),Day_Clicked.get(),Hour_Var.get(),Minute_Var.get()))
+        connection.commit()
+        Update_Listbox()
     Run_Window=Toplevel(window)
     Run_Window.title("Edit/Add Run")        #Create the run adding window and attributes
     Run_Window.geometry("400x500")
@@ -95,6 +152,7 @@ def Create_Run_Window():
     Run_Distance_Label=Label(Run_Window, text="Distance: ",font=Button_Font,bd=0)
     Run_Run_Time_Label=Label(Run_Window, text="Time: ",font=Button_Font,bd=0)
     Run_Colon_Label=Label(Run_Window,text=':',font=Button_Font)
+    Run_Name_Label = Label(Run_Window,text="Run Name: ", font=Button_Font,bd=0)
     
     Run_Conditions_Drop=OptionMenu(Run_Window,Conditions_Clicked,"Sunny","Heavy Rain","Light Rain","Fog","Overcast","Snow")
     Run_Day_Drop=OptionMenu(Run_Window,Day_Clicked,"Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday")
@@ -106,7 +164,12 @@ def Create_Run_Window():
     Run_Time_Min_Input=Spinbox(Run_Window,textvariable=Time_Minute_Var,from_=0,to=500,width=4,format='%02.0f')
     Run_Time_Second_Input=Spinbox(Run_Window,textvariable=Time_Second_Var,from_=0,to=59,width=4,format='%02.0f')
     Run_Colon_Label_2=Label(Run_Window,text=':',font=Button_Font)
-    Run_Add_Button=Button(Run_Window,image=Add_Button_Photo,bg='#f0f0f0',relief=FLAT,width=150,height=54,bd=0)
+    if add:
+        Run_Add_Button=Button(Run_Window,image=Add_Button_Photo,bg='#f0f0f0',relief=FLAT,width=150,height=54,bd=0,command=Add)
+    else:
+        Run_Add_Button=Button(Run_Window,image=Add_Button_Photo,bg='#f0f0f0',relief=FLAT,width=150,height=54,bd=0,command=Add)
+    Run_Name_Field=Entry(Run_Window,textvariable=Run_Name)
+
     
     Run_Weather_Label.place(x=0,y=0)
     Run_Conditions_Label.place(x=10,y=40)
@@ -129,8 +192,14 @@ def Create_Run_Window():
     Run_Time_Min_Input.place(x=200,y=360)
     Run_Time_Second_Input.place(x=250,y=360)
     Run_Colon_Label_2.place(x=235,y=350)
+    Run_Name_Label.place(x=0,y=400)
+    Run_Name_Field.place(x=200,y=405)
+
     Run_Add_Button.place(x=240,y=430)
-    
+def add_window():
+    Create_Run_Window(True)
+def edit_window():
+    Create_Run_Window(False)
 def Create_Ideal_Window():
     Distance_Var=StringVar(value=0)            #Create distance variable
     
@@ -198,14 +267,25 @@ Delete_Button_Border = Frame(Edit_Add_Delete_Border, highlightbackground = "blac
 
 Edit_Button=Button(Edit_Button_Border,text="Edit",font=Button_Font,bg='#b5d9fe',relief=FLAT,bd=5,width=7)
 Add_Button=Button(Add_Button_Border,text="Add",font=Button_Font,bg='#b5d9fe',relief=FLAT,bd=5,width=7,command=Create_Run_Window)         #Create Edit, Add and Delete buttons                        #Create the edit, add and delete buttons
-Delete_Button=Button(Delete_Button_Border,text="Delete",font=Button_Font,bg='#f9c7c7',relief=FLAT,bd=5,width=7)
+Delete_Button=Button(Delete_Button_Border,text="Delete",font=Button_Font,bg='#f9c7c7',relief=FLAT,bd=5,width=7,command=delete)
 
-List_Box=Listbox(window)                   #Create list box
+
 
 Edit_Button_Border.grid(row=0,column=0)
 Add_Button_Border.grid(row=0,column=1)
 Delete_Button_Border.grid(row=0,column=2)
-List_Box.place(x=800,y=100)
+
+
+
+List_Box_Frame_1.place(x=800,y=100)
+List_Box_Frame_2.place(x=850,y=100)
+List_Box_Frame_3.place(x=950,y=100)
+List_Box_Frame_4.place(x=1050,y=100)
+List_Box.pack()
+List_Box_2.pack()
+List_Box_3.pack()
+List_Box_4.pack()
+
 Edit_Add_Delete_Border.place(x=800,y=400)
 Weather_Label.place(x=200,y=165)
 Day_Time_Label.place(x=200,y=195)                           #Place everything
