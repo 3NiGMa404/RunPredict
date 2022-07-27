@@ -4,7 +4,7 @@ from tkinter import ttk
 import sklearn           #Import sklearn for linear regression
 import sqlite3
 import math
-print("a")
+
 connection=sqlite3.connect('database.db')
 cur=connection.cursor()
 #cur.execute('''CREATE TABLE Runs(iD integer, Name text, Distance real, Time real, Conditions text, Temperature real, Humidity integer, Day text, HourOfDay integer, MinuteOfDay integer)''')
@@ -20,6 +20,7 @@ Button_Font = font.Font(family='Microsoft Sans Serif',size=15)
 Label_Font = font.Font(family='Microsoft Sans Serif',size=15,weight="bold")         #Create fonts for buttons and labels
 Add_Button_Photo = PhotoImage(file = "Add Button.PNG").subsample(2,2)
 Predict_Button_Photo = PhotoImage(file = "Predict Button.PNG").subsample(2,2)          #Get images for buttons
+Edit_Button_Photo = PhotoImage(file = "Edit Button.PNG").subsample(2,2)          #Get images for buttons
 
 List_Box_Frame_1=Frame(window, highlightbackground = "black", highlightthickness = 0, bd=0,width=1)
 List_Box_Frame_2=Frame(window, highlightbackground = "black", highlightthickness = 0, bd=0,width=1)
@@ -31,7 +32,41 @@ List_Box_2=Listbox(List_Box_Frame_2)                   #Create list box
 List_Box_3=Listbox(List_Box_Frame_3)
 List_Box_4=Listbox(List_Box_Frame_4)
 
+def Quantify_Data(data):
+    Processed_Data=[]
+    for record in data:
+        processed_record=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        temp=[]
+        processed_record.append([record[3]])
+        if record[4]=="Heavy Rain": processed_record[0]=1
+        if record[4]=="Light Rain": processed_record[1]=1
+        if record[4]=="Sunny": processed_record[2]=1
+        if record[4]=="Overcast": processed_record[4]=1
+        if record[4]=="Fog": processed_record[5]=1
+        if record[4]=="Snow": processed_record[6]=1
+        
+        if record[5]<5: processed_record[7]=1
+        if 5<=record[5]<10: processed_record[8]=1
+        if 10<=record[5]<15: processed_record[9]=1
+        if 15<=record[5]<20: processed_record[10]=1
+        if 20<=record[5]<25: processed_record[11]=1
+        if 25<=record[5]<30: processed_record[12]=1
+        if 30<=record[5]: processed_record[13]=1
 
+        if record[6]<20: processed_record[14]=1
+        if 20<=record[6]<40: processed_record[15]=1
+        if 40<=record[6]<60: processed_record[16]=1
+        if 60<=record[6]<80: processed_record[17]=1
+        if 80<=record[6]: processed_record[18]=1
+
+        if record[7]=="Monday": processed_record[19]=1
+        if record[7]=="Tuesday": processed_record[20]=1
+        if record[7]=="Wednesday": processed_record[21]=1
+        if record[7]=="Thursday": processed_record[22]=1
+        if record[7]=="Friday": processed_record[23]=1
+        if record[7]=="Saturday": processed_record[24]=1
+        if record[7]=="Sunday": processed_record[25]=1
+        
 def Update_Listbox():
     counter=0
     List_Box.delete(0,END)
@@ -114,19 +149,32 @@ def Create_Predict_Window():
 def delete():
     List_Box_2.curselection()
     cur.execute('DELETE FROM Runs WHERE iD = '+str(List_Box.get(List_Box.curselection())))
+    connection.commit()
     Update_Listbox()
 def Create_Run_Window(add):
-    Conditions_Clicked = StringVar()
-    Day_Clicked = StringVar()
-    Temperature_Var=StringVar(value=0)        #Instantiate variables
-    Humidity_Var=StringVar(value=0)
-    Hour_Var=StringVar(value=0)
-    Minute_Var=StringVar(value=0)
-    Distance_Var=StringVar(value=0)
-    Time_Minute_Var=StringVar(value=0)
-    Time_Second_Var=StringVar(value=0)
-    Run_Name=StringVar()
-    
+    if add:
+        Conditions_Clicked = StringVar()
+        Day_Clicked = StringVar()
+        Temperature_Var=StringVar(value=0)        #Instantiate variables
+        Humidity_Var=StringVar(value=0)
+        Hour_Var=StringVar(value=0)
+        Minute_Var=StringVar(value=0)
+        Distance_Var=StringVar(value=0)
+        Time_Minute_Var=StringVar(value=0)
+        Time_Second_Var=StringVar(value=0)
+        Run_Name=StringVar()
+    else:
+        Record=[i for i in cur.execute('''SELECT * FROM Runs;''')][0]
+        Conditions_Clicked = StringVar(value=Record[4])
+        Day_Clicked = StringVar(value=Record[7])
+        Temperature_Var=StringVar(value=Record[5])        #Instantiate variables
+        Humidity_Var=StringVar(value=Record[6])
+        Hour_Var=StringVar(value=Record[8])
+        Minute_Var=StringVar(value=Record[9])
+        Distance_Var=StringVar(value=Record[2])
+        Time_Minute_Var=StringVar(value=Record[3]%60)
+        Time_Second_Var=StringVar(value=math.floor(Record[3]/60))
+        Run_Name=StringVar(value=Record[1])
     def Add():
         try:
             New_iD = [i for i in cur.execute('''SELECT MAX(iD) FROM Runs;''')][0][0]+1
@@ -136,6 +184,18 @@ def Create_Run_Window(add):
         cur.execute('INSERT INTO Runs VALUES ({},"{}",{},{},"{}",{},{},"{}",{},{});'.format(New_iD, Run_Name.get(),Distance_Var.get(),True_Time,Conditions_Clicked.get(),Temperature_Var.get(),Humidity_Var.get(),Day_Clicked.get(),Hour_Var.get(),Minute_Var.get()))
         connection.commit()
         Update_Listbox()
+
+#iD integer, Name text, Distance real, Time real, Conditions text, Temperature real, Humidity integer, Day text, HourOfDay integer, MinuteOfDay integer
+    def Edit():
+        try:
+            New_iD = [i for i in cur.execute('''SELECT MAX(iD) FROM Runs;''')][0][0]+1
+        except:
+            New_iD = 0
+        True_Time=int(Time_Minute_Var.get())*60 + int(Time_Second_Var.get())
+        cur.execute('UPDATE Runs SET Name="{}",Distance={},Time={},Conditions="{}",Temperature={},Humidity={},Day="{}",HourOfDay={},MinuteOfDay={} WHERE iD={};'.format(Run_Name.get(),Distance_Var.get(),True_Time,Conditions_Clicked.get(),Temperature_Var.get(),Humidity_Var.get(),Day_Clicked.get(),Hour_Var.get(),Minute_Var.get(),New_iD))
+        connection.commit()
+        Update_Listbox()
+        
     Run_Window=Toplevel(window)
     Run_Window.title("Edit/Add Run")        #Create the run adding window and attributes
     Run_Window.geometry("400x500")
@@ -167,7 +227,7 @@ def Create_Run_Window(add):
     if add:
         Run_Add_Button=Button(Run_Window,image=Add_Button_Photo,bg='#f0f0f0',relief=FLAT,width=150,height=54,bd=0,command=Add)
     else:
-        Run_Add_Button=Button(Run_Window,image=Add_Button_Photo,bg='#f0f0f0',relief=FLAT,width=150,height=54,bd=0,command=Add)
+        Run_Add_Button=Button(Run_Window,image=Edit_Button_Photo,bg='#f0f0f0',relief=FLAT,width=150,height=54,bd=0,command=Edit)
     Run_Name_Field=Entry(Run_Window,textvariable=Run_Name)
 
     
@@ -218,8 +278,11 @@ def Create_Ideal_Window():
     Ideal_Distance_Label_2.place(x=10,y=50)
     Ideal_Distance_Input.place(x=200,y=50)               #Place labels
     Ideal_Predict_Button.place(x=240,y=430)
-    
 
+
+Scrollbox=Frame(window, highlightbackground = "black", highlightthickness = 0, bd=0,width=10,height=1000)
+
+scrollbar = Scrollbar(Scrollbox,orient=VERTICAL)
 Time_Button_Border = Frame(window, highlightbackground = "black", highlightthickness = 2, bd=0)                  #Create a border for the time predict button and the button itself
 Time_Button=Button(Time_Button_Border,text="Predict Time From Conditions",font=Button_Font,bg='#edead9',relief=FLAT,bd=10,width=22,command=Create_Predict_Window)
 
@@ -265,8 +328,8 @@ Add_Button_Border = Frame(Edit_Add_Delete_Border, highlightbackground = "black",
 Delete_Button_Border = Frame(Edit_Add_Delete_Border, highlightbackground = "black", highlightthickness = 1, bd=0) 
 
 
-Edit_Button=Button(Edit_Button_Border,text="Edit",font=Button_Font,bg='#b5d9fe',relief=FLAT,bd=5,width=7)
-Add_Button=Button(Add_Button_Border,text="Add",font=Button_Font,bg='#b5d9fe',relief=FLAT,bd=5,width=7,command=Create_Run_Window)         #Create Edit, Add and Delete buttons                        #Create the edit, add and delete buttons
+Edit_Button=Button(Edit_Button_Border,text="Edit",font=Button_Font,bg='#b5d9fe',relief=FLAT,bd=5,width=7,command=edit_window)
+Add_Button=Button(Add_Button_Border,text="Add",font=Button_Font,bg='#b5d9fe',relief=FLAT,bd=5,width=7,command=add_window)         #Create Edit, Add and Delete buttons                        #Create the edit, add and delete buttons
 Delete_Button=Button(Delete_Button_Border,text="Delete",font=Button_Font,bg='#f9c7c7',relief=FLAT,bd=5,width=7,command=delete)
 
 
@@ -274,9 +337,22 @@ Delete_Button=Button(Delete_Button_Border,text="Delete",font=Button_Font,bg='#f9
 Edit_Button_Border.grid(row=0,column=0)
 Add_Button_Border.grid(row=0,column=1)
 Delete_Button_Border.grid(row=0,column=2)
+Blank_Box=Label(Scrollbox,height=10,width=1)
+Scrollbox.place(x=1150,y=100)
+Blank_Box.grid(row=0,column=1)
 
-
-
+scrollbar.grid(row=0,column=0,sticky=NS)
+List_Box.config(yscrollcommand = scrollbar.set)
+List_Box_2.config(yscrollcommand = scrollbar.set)
+List_Box_3.config(yscrollcommand = scrollbar.set)
+List_Box_4.config(yscrollcommand = scrollbar.set)
+def multiple_yview(*args):
+    List_Box.yview(*args)
+    List_Box_2.yview(*args)
+    List_Box_3.yview(*args)
+    List_Box_4.yview(*args)
+    
+scrollbar.config(command = multiple_yview)
 List_Box_Frame_1.place(x=800,y=100)
 List_Box_Frame_2.place(x=850,y=100)
 List_Box_Frame_3.place(x=950,y=100)

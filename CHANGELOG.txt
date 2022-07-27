@@ -1,4 +1,4 @@
-CHANGELOG 26/07/2022
+CHANGELOG 27/07/2022
 
-- Added 'Add' and 'Delete' SQL functionality
-- Added multiple listboxes for run details
+- Fixed edit buttons and added scrollbar
+- Started linear regression quanitification
