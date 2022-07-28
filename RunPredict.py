@@ -11,6 +11,7 @@ cur=connection.cursor()
 #cur.execute('''DELETE FROM Runs''' )
 #connection.commit()
 print([i for i in cur.execute('''SELECT * FROM Runs;''')])
+print('\n\n\n')
 window=Tk()
 window.state('zoomed')         #Define the window attributes
 window.title('RunPredict')
@@ -34,39 +35,92 @@ List_Box_4=Listbox(List_Box_Frame_4)
 
 def Quantify_Data(data):
     Processed_Data=[]
+    
     for record in data:
-        processed_record=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-        temp=[]
+        processed_record=[]
+        X=[0]*50
+        if record[4]=="Heavy Rain": X[0]=1
+        if record[4]=="Light Rain": X[1]=1
+        if record[4]=="Sunny": X[2]=1
+        if record[4]=="Overcast": X[3]=1
+        if record[4]=="Fog": X[4]=1
+        if record[4]=="Snow": X[5]=1
+        
+        if record[5]<5: X[6]=1
+        if 5<=record[5]<10: X[7]=1
+        if 10<=record[5]<15: X[8]=1
+        if 15<=record[5]<20: X[9]=1
+        if 20<=record[5]<25: X[10]=1
+        if 25<=record[5]<30: X[11]=1
+        if 30<=record[5]: X[12]=1
+
+        if record[6]<20: X[13]=1
+        if 20<=record[6]<40: X[14]=1
+        if 40<=record[6]<60: X[15]=1
+        if 60<=record[6]<80: X[16]=1
+        if 80<=record[6]: X[17]=1
+
+        if record[7]=="Monday": X[18]=1
+        if record[7]=="Tuesday": X[19]=1
+        if record[7]=="Wednesday": X[20]=1
+        if record[7]=="Thursday": X[21]=1
+        if record[7]=="Friday": X[22]=1
+        if record[7]=="Saturday": X[23]=1
+        if record[7]=="Sunday": X[24]=1
+
+        for i in range(0,24):
+            if record[8]==i:
+                X[26+i]=1
+        processed_record.append(X)
         processed_record.append([record[3]])
-        if record[4]=="Heavy Rain": processed_record[0]=1
-        if record[4]=="Light Rain": processed_record[1]=1
-        if record[4]=="Sunny": processed_record[2]=1
-        if record[4]=="Overcast": processed_record[4]=1
-        if record[4]=="Fog": processed_record[5]=1
-        if record[4]=="Snow": processed_record[6]=1
-        
-        if record[5]<5: processed_record[7]=1
-        if 5<=record[5]<10: processed_record[8]=1
-        if 10<=record[5]<15: processed_record[9]=1
-        if 15<=record[5]<20: processed_record[10]=1
-        if 20<=record[5]<25: processed_record[11]=1
-        if 25<=record[5]<30: processed_record[12]=1
-        if 30<=record[5]: processed_record[13]=1
+            
+        Processed_Data.append(processed_record)
+    return Processed_Data
 
-        if record[6]<20: processed_record[14]=1
-        if 20<=record[6]<40: processed_record[15]=1
-        if 40<=record[6]<60: processed_record[16]=1
-        if 60<=record[6]<80: processed_record[17]=1
-        if 80<=record[6]: processed_record[18]=1
-
-        if record[7]=="Monday": processed_record[19]=1
-        if record[7]=="Tuesday": processed_record[20]=1
-        if record[7]=="Wednesday": processed_record[21]=1
-        if record[7]=="Thursday": processed_record[22]=1
-        if record[7]=="Friday": processed_record[23]=1
-        if record[7]=="Saturday": processed_record[24]=1
-        if record[7]=="Sunday": processed_record[25]=1
+def UnQuantify_Data(data):
+    Qualified_Data=[]
+    for record in data:
+        X=[]
+        if record[0][0]==1: X.append("Heavy Rain")
+        if record[0][1]==1: X.append("Light Rain")
+        if record[0][2]==1: X.append("Sunny")
+        if record[0][3]==1: X.append("Overcast")
+        if record[0][4]==1: X.append("Fog")
+        if record[0][5]==1: X.append("Snow")
         
+        if record[0][6]==1: X.append(0)
+        if record[0][7]==1: X.append(7.5)
+        if record[0][8]==1: X.append(12.5)
+        if record[0][9]==1: X.append(17.5)
+        if record[0][10]==1: X.append(22.5)
+        if record[0][11]==1: X.append(27.5)
+        if record[0][12]==1: X.append(35)
+
+        if record[0][13]==1: X.append(10)
+        if record[0][14]==1: X.append(30)
+        if record[0][15]==1: X.append(50)
+        if record[0][16]==1: X.append(70)
+        if record[0][17]==1: X.append(90)
+
+        if record[0][18]==1: X.append("Monday")
+        if record[0][19]==1: X.append("Tuesday")
+        if record[0][20]==1: X.append("Wednesday")
+        if record[0][21]==1: X.append("Thursday")
+        if record[0][22]==1: X.append("Friday")
+        if record[0][23]==1: X.append("Saturday")
+        if record[0][24]==1: X.append("Sunday")
+        for i in range(25,50):
+            if record[0][i]==1:
+                X.append('{}:00'.format(str(i - 25).zfill(2)))
+        Qualified_Data.append(X)
+    return Qualified_Data
+                    
+    
+
+Quant=Quantify_Data([i for i in cur.execute('''SELECT * FROM Runs;''')])
+print(Quant)
+Qual=UnQuantify_Data(Quant)
+print(Qual)
 def Update_Listbox():
     counter=0
     List_Box.delete(0,END)

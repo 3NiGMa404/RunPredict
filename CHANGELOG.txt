@@ -1,4 +1,3 @@
-CHANGELOG 27/07/2022
+CHANGELOG 28/07/2022
 
-- Fixed edit buttons and added scrollbar
-- Started linear regression quanitification
+- Continued data stuff
