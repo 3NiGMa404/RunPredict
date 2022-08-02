@@ -1,9 +1,10 @@
 from tkinter import *    #Import the tkinter library for GUI
 import tkinter.font as font
 from tkinter import ttk
-import sklearn           #Import sklearn for linear regression
+from sklearn import linear_model         #Import sklearn for linear regression
 import sqlite3
 import math
+import numpy as np
 
 connection=sqlite3.connect('database.db')
 cur=connection.cursor()
@@ -33,12 +34,17 @@ List_Box_2=Listbox(List_Box_Frame_2)                   #Create list box
 List_Box_3=Listbox(List_Box_Frame_3)
 List_Box_4=Listbox(List_Box_Frame_4)
 
+Weather_Var = StringVar()
+Weather_Label = Label(window, textvariable=Weather_Var,font=Label_Font,bd=0)            #Weather label text variable and data
+Weather_Var.set("Weather: ")
+
 def Quantify_Data(data):
     Processed_Data=[]
     
     for record in data:
         processed_record=[]
         X=[0]*50
+        print("4: {}".format(record[4]))
         if record[4]=="Heavy Rain": X[0]=1
         if record[4]=="Light Rain": X[1]=1
         if record[4]=="Sunny": X[2]=1
@@ -67,9 +73,10 @@ def Quantify_Data(data):
         if record[7]=="Friday": X[22]=1
         if record[7]=="Saturday": X[23]=1
         if record[7]=="Sunday": X[24]=1
-
+        
+        rounded_hour=(record[8] if record[9]<30 else record[8] + 1)
         for i in range(0,24):
-            if record[8]==i:
+            if rounded_hour==i:
                 X[26+i]=1
         processed_record.append(X)
         processed_record.append([record[3]])
@@ -111,7 +118,7 @@ def UnQuantify_Data(data):
         if record[0][24]==1: X.append("Sunday")
         for i in range(25,50):
             if record[0][i]==1:
-                X.append('{}:00'.format(str(i - 25).zfill(2)))
+                X.append('{}:00'.format(str(i - 26).zfill(2)))
         Qualified_Data.append(X)
     return Qualified_Data
                     
@@ -121,6 +128,7 @@ Quant=Quantify_Data([i for i in cur.execute('''SELECT * FROM Runs;''')])
 print(Quant)
 Qual=UnQuantify_Data(Quant)
 print(Qual)
+
 def Update_Listbox():
     counter=0
     List_Box.delete(0,END)
@@ -156,6 +164,22 @@ def Create_Predict_Window():
     Hour_Var=StringVar(value=0)
     Minute_Var=StringVar(value=0)
     Distance_Var=StringVar(value=0)
+    def Predict_Time():
+        Data_Raw=cur.execute('''SELECT * FROM Runs WHERE distance BETWEEN {} AND {};'''.format(float(Distance_Var.get())-0.01,float(Distance_Var.get())+0.01))
+        Data=Quantify_Data(Data_Raw)
+        X=[]
+        Y=[]
+        for i in Data:
+            X.append(i[0])
+            Y.append(i[1])
+        #Regression=linear_model.LinearRegression().fit(X,Y)
+        True_Time=int(Hour_Var.get())*60+int(Minute_Var.get())
+
+        print("Daddy: {}".format(Weather_Var.get()))
+        Quantified_Data=Quantify_Data([[0, ' ',float(Distance_Var.get()),True_Time,Conditions_Clicked.get(),float(Temperature_Var.get()),int(Humidity_Var.get()),Day_Clicked.get(),int(Hour_Var.get()),int(Minute_Var.get())]])
+
+        Weather_Var.set("Conditions: {}, {}°C, {}% Humidity".format(Conditions_Clicked.get(),Temperature_Var.get(),Humidity_Var.get()))
+        return Regression.predict([Quantified_Data[0][0]])
     
     Predict_Window=Toplevel(window)
     Predict_Window.title("Predict Time")
@@ -180,7 +204,7 @@ def Create_Predict_Window():
     Predict_Hour_Input=Spinbox(Predict_Window,textvariable=Hour_Var,from_=0,to=23,width=4,format='%02.0f')
     Predict_Minute_Input=Spinbox(Predict_Window,textvariable=Minute_Var,from_=0,to=59,width=4,format='%02.0f')
     Predict_Distance_Input=Spinbox(Predict_Window,textvariable=Distance_Var,from_=0,to=100,width=10,format='%3.2f',increment=0.01)
-    Predict_Add_Button=Button(Predict_Window,image=Predict_Button_Photo,bg='#f0f0f0',relief=FLAT,width=150,height=54,bd=0)
+    Predict_Predict_Button=Button(Predict_Window,image=Predict_Button_Photo,bg='#f0f0f0',relief=FLAT,width=150,height=54,bd=0,command=Predict_Time)
     
     Predict_Weather_Label.place(x=0,y=0)
     Predict_Conditions_Label.place(x=10,y=40)
@@ -199,7 +223,7 @@ def Create_Predict_Window():
     Predict_Minute_Input.place(x=250,y=240)
     Predict_Colon_Label.place(x=235,y=230)
     Predict_Distance_Input.place(x=200,y=320)
-    Predict_Add_Button.place(x=240,y=430)
+    Predict_Predict_Button.place(x=240,y=430)
 def delete():
     List_Box_2.curselection()
     cur.execute('DELETE FROM Runs WHERE iD = '+str(List_Box.get(List_Box.curselection())))
@@ -343,9 +367,7 @@ Time_Button=Button(Time_Button_Border,text="Predict Time From Conditions",font=B
 Ideal_Button_Border = Frame(window, highlightbackground = "black", highlightthickness = 2, bd=0)                  #Create a border for the conditions predict button and the button itself
 Ideal_Button=Button(Ideal_Button_Border,text="Predict Ideal Conditions",font=Button_Font,bg='#edead9',relief=FLAT,bd=10,width=22,command=Create_Ideal_Window)
 
-Weather_Var = StringVar()
-Weather_Label = Label(window, textvariable=Weather_Var,font=Label_Font,bd=0)            #Weather label text variable and data
-Weather_Var.set("Weather: ")
+
 
 Day_Time_Var = StringVar()
 Day_Time_Label = Label(window, textvariable=Day_Time_Var,font=Label_Font,bd=0)            #Day and time label text variable and data

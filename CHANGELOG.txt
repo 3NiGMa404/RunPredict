@@ -1,3 +1,4 @@
 CHANGELOG 28/07/2022
 
-- Continued data stuff
+- Created regression model and regression analysis
+- Update UI with predictions
