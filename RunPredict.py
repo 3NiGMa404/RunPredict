@@ -172,14 +172,18 @@ def Create_Predict_Window():
         for i in Data:
             X.append(i[0])
             Y.append(i[1])
-        #Regression=linear_model.LinearRegression().fit(X,Y)
+        Regression=linear_model.LinearRegression().fit(X,Y)
         True_Time=int(Hour_Var.get())*60+int(Minute_Var.get())
 
-        print("Daddy: {}".format(Weather_Var.get()))
         Quantified_Data=Quantify_Data([[0, ' ',float(Distance_Var.get()),True_Time,Conditions_Clicked.get(),float(Temperature_Var.get()),int(Humidity_Var.get()),Day_Clicked.get(),int(Hour_Var.get()),int(Minute_Var.get())]])
 
-        Weather_Var.set("Conditions: {}, {}°C, {}% Humidity".format(Conditions_Clicked.get(),Temperature_Var.get(),Humidity_Var.get()))
-        return Regression.predict([Quantified_Data[0][0]])
+        Weather_Var.set("Weather: {}, {}°C, {}% Humidity".format(Conditions_Clicked.get(),Temperature_Var.get(),Humidity_Var.get()))
+        Prediction=Regression.predict([Quantified_Data[0][0]])[0][0]
+        Time_Var.set("Predicted Time: {}:{}".format(math.floor(Prediction/60),str(int(Prediction%60)).zfill(2)))
+        Day_Time_Var.set("Day and Time: "+ Day_Clicked.get() + " at " + Hour_Var.get() + ":" + Minute_Var.get())
+        Distance_Var_2.set("Distance: "+str(round(float(Distance_Var.get()),2))+"km")
+        Predict_Window.destroy()
+        
     
     Predict_Window=Toplevel(window)
     Predict_Window.title("Predict Time")
@@ -340,6 +344,32 @@ def edit_window():
     Create_Run_Window(False)
 def Create_Ideal_Window():
     Distance_Var=StringVar(value=0)            #Create distance variable
+    def Predict_Ideal():
+        weather_types=["Heavy Rain","Light Rain","Sunny","Overcast","Fog","Snow"]
+        Data_Raw=cur.execute('''SELECT * FROM Runs WHERE distance BETWEEN {} AND {};'''.format(float(Distance_Var.get())-0.01,float(Distance_Var.get())+0.01))
+        Data=Quantify_Data(Data_Raw)
+        X=[]
+        Y=[]
+        for i in Data:
+            X.append(i[0])
+            Y.append(i[1])
+        Regression=linear_model.LinearRegression().fit(X,Y)
+
+        Coef=list(Regression.coef_[0])       
+
+        Weather_Coef=Coef[0:5]
+        
+        for i in range(len(Weather_Coef)):
+            if Weather_Coef[i] == 0:
+                Weather_Coef[i] = 100
+        Ideal_Weather=weather_types[Weather_Coef.index(min(Weather_Coef[0:5]))]
+        #6,7,8,9,10,11,12
+        Temperature_Coef=Coef[6:12]
+        for i in range(len(Temperature_Coef)):
+            if Temperature_Coef[i] == 0:
+                Temperature_Coef[i] = 100
+        Ideal_Temperature=Temperature_Coef.index(min(Temperature_Coef))*5 - 2.5
+        
     
     Ideal_Window=Toplevel(window)
     Ideal_Window.title("Predict Ideal Conditions")
@@ -350,7 +380,7 @@ def Create_Ideal_Window():
     Ideal_Distance_Label_2=Label(Ideal_Window, text="Distance: ",font=Button_Font,bd=0)      #Create Labels
     
     Ideal_Distance_Input=Spinbox(Ideal_Window,textvariable=Distance_Var,from_=0,to=100,width=10,format='%3.2f',increment=0.01)
-    Ideal_Predict_Button=Button(Ideal_Window,image=Predict_Button_Photo,bg='#f0f0f0',relief=FLAT,width=150,height=54,bd=0)    #Create button and input
+    Ideal_Predict_Button=Button(Ideal_Window,image=Predict_Button_Photo,bg='#f0f0f0',relief=FLAT,width=150,height=54,bd=0,command=Predict_Ideal)    #Create button and input
     
     Ideal_Distance_Label.place(x=0,y=10)
     Ideal_Distance_Label_2.place(x=10,y=50)
@@ -373,9 +403,9 @@ Day_Time_Var = StringVar()
 Day_Time_Label = Label(window, textvariable=Day_Time_Var,font=Label_Font,bd=0)            #Day and time label text variable and data
 Day_Time_Var.set("Day and Time: ")
 
-Distance_Var = StringVar()
-Distance_Label = Label(window, textvariable=Distance_Var,font=Label_Font,bd=0)            #Distance label text variable and data
-Distance_Var.set("Distance: ")
+Distance_Var_2 = StringVar()
+Distance_Label = Label(window, textvariable=Distance_Var_2,font=Label_Font,bd=0)            #Distance label text variable and data
+Distance_Var_2.set("Distance: ")
 
 Time_Var = StringVar()
 Time_Label = Label(window, textvariable=Time_Var,font=Label_Font,bd=0)            #Predicted time label text variable and data

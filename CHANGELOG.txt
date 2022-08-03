@@ -1,4 +1,4 @@
-CHANGELOG 28/07/2022
+CHANGELOG 03/08/2022
 
-- Created regression model and regression analysis
-- Update UI with predictions
+- Finished time prediction and output
+- Started ideal prediction
