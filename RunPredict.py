@@ -257,8 +257,9 @@ def Create_Run_Window(add):
         Hour_Var=StringVar(value=Record[8])
         Minute_Var=StringVar(value=Record[9])
         Distance_Var=StringVar(value=Record[2])
-        Time_Minute_Var=StringVar(value=Record[3]%60)
-        Time_Second_Var=StringVar(value=math.floor(Record[3]/60))
+        print("Record 3: {}".format(Record[3]))
+        Time_Minute_Var=StringVar(value=math.floor(Record[3]/60))
+        Time_Second_Var=StringVar(value=Record[3]%60)
         Run_Name=StringVar(value=Record[1])
     def Add():
         try:
