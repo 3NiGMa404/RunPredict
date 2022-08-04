@@ -11,6 +11,8 @@ cur=connection.cursor()
 #cur.execute('''CREATE TABLE Runs(iD integer, Name text, Distance real, Time real, Conditions text, Temperature real, Humidity integer, Day text, HourOfDay integer, MinuteOfDay integer)''')
 #cur.execute('''DELETE FROM Runs''' )
 #connection.commit()
+
+#TIME IS UPDATING THE WRONG BOX!!!
 print([i for i in cur.execute('''SELECT * FROM Runs;''')])
 print('\n\n\n')
 window=Tk()
@@ -28,6 +30,7 @@ List_Box_Frame_1=Frame(window, highlightbackground = "black", highlightthickness
 List_Box_Frame_2=Frame(window, highlightbackground = "black", highlightthickness = 0, bd=0,width=1)
 List_Box_Frame_3=Frame(window, highlightbackground = "black", highlightthickness = 0, bd=0,width=1)
 List_Box_Frame_4=Frame(window, highlightbackground = "black", highlightthickness = 0, bd=0,width=1)
+
 
 List_Box=Listbox(List_Box_Frame_1)                   #Create list box
 List_Box_2=Listbox(List_Box_Frame_2)                   #Create list box
@@ -77,7 +80,7 @@ def Quantify_Data(data):
         rounded_hour=(record[8] if record[9]<30 else record[8] + 1)
         for i in range(0,24):
             if rounded_hour==i:
-                X[26+i]=1
+                X[25+i]=1
         processed_record.append(X)
         processed_record.append([record[3]])
             
@@ -118,7 +121,7 @@ def UnQuantify_Data(data):
         if record[0][24]==1: X.append("Sunday")
         for i in range(25,50):
             if record[0][i]==1:
-                X.append('{}:00'.format(str(i - 26).zfill(2)))
+                X.append('{}:00'.format(str(i - 25).zfill(2)))
         Qualified_Data.append(X)
     return Qualified_Data
                     
@@ -126,7 +129,7 @@ def UnQuantify_Data(data):
 
 Quant=Quantify_Data([i for i in cur.execute('''SELECT * FROM Runs;''')])
 print(Quant)
-Qual=UnQuantify_Data(Quant)
+Qual=UnQuantify_Data(Quant) 
 print(Qual)
 
 def Update_Listbox():
@@ -246,7 +249,7 @@ def Create_Run_Window(add):
         Time_Second_Var=StringVar(value=0)
         Run_Name=StringVar()
     else:
-        Record=[i for i in cur.execute('''SELECT * FROM Runs;''')][0]
+        Record=[i for i in cur.execute('''SELECT * FROM Runs;''')][List_Box.curselection()[0]]
         Conditions_Clicked = StringVar(value=Record[4])
         Day_Clicked = StringVar(value=Record[7])
         Temperature_Var=StringVar(value=Record[5])        #Instantiate variables
@@ -346,6 +349,7 @@ def Create_Ideal_Window():
     Distance_Var=StringVar(value=0)            #Create distance variable
     def Predict_Ideal():
         weather_types=["Heavy Rain","Light Rain","Sunny","Overcast","Fog","Snow"]
+        days=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
         Data_Raw=cur.execute('''SELECT * FROM Runs WHERE distance BETWEEN {} AND {};'''.format(float(Distance_Var.get())-0.01,float(Distance_Var.get())+0.01))
         Data=Quantify_Data(Data_Raw)
         X=[]
@@ -362,13 +366,35 @@ def Create_Ideal_Window():
         for i in range(len(Weather_Coef)):
             if Weather_Coef[i] == 0:
                 Weather_Coef[i] = 100
-        Ideal_Weather=weather_types[Weather_Coef.index(min(Weather_Coef[0:5]))]
-        #6,7,8,9,10,11,12
+        Ideal_Weather=weather_types[Weather_Coef.index(min(Weather_Coef))]
+        
         Temperature_Coef=Coef[6:12]
         for i in range(len(Temperature_Coef)):
             if Temperature_Coef[i] == 0:
                 Temperature_Coef[i] = 100
-        Ideal_Temperature=Temperature_Coef.index(min(Temperature_Coef))*5 - 2.5
+        Ideal_Temperature=(Temperature_Coef.index(min(Temperature_Coef))+1)*5 - 2.5
+
+        Humidity_Coef=Coef[13:17] 
+        for i in range(len(Humidity_Coef)):
+            if Humidity_Coef[i] == 0:
+                Humidity_Coef[i] = 100
+        Ideal_Humidity=(Humidity_Coef.index(min(Humidity_Coef))+1)*20 - 10
+
+        Weather_Ideal_Var.set("Weather: {}, {}°C, {}% Humidity".format(Ideal_Weather,Ideal_Temperature,Ideal_Humidity))
+
+        Days_Coef=Coef[18:24]
+        for i in range(len(Days_Coef)):
+            if Days_Coef[i] == 0:
+                Days_Coef[i] = 100
+        Ideal_Day=days[Days_Coef.index(min(Days_Coef))]
+
+        Time_Coef=Coef[25:48]
+        for i in range(len(Time_Coef)):
+            if Time_Coef[i] == 0:
+                Time_Coef[i] = 100
+        Ideal_Time=Time_Coef.index(min(Time_Coef))
+        
+        Day_Time_Ideal_Var.set("Day and Time: {} at {}:00".format(Ideal_Day,Ideal_Time))
         
     
     Ideal_Window=Toplevel(window)
