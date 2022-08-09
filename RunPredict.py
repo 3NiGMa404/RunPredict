@@ -1,12 +1,27 @@
 from tkinter import *    #Import the tkinter library for GUI
 import tkinter.font as font
+import tkinter.filedialog as fd
+import tkinter.messagebox as messagebox
 from tkinter import ttk
 from sklearn import linear_model         #Import sklearn for linear regression
 import sqlite3
 import math
 import numpy as np
+import os
+import easygui
 
-connection=sqlite3.connect('database.db')
+
+def Choose_File():
+    file=''
+    while not file[-3:].lower()==".db":
+        file=easygui.fileopenbox(filetypes=('Db files',"*.db"))
+        if not file[-3:].lower()==".db":
+            messagebox.showwarning(title="File Warning", message="Please choose a .db file, exiting...")
+            exit()
+        return file
+
+connection=sqlite3.connect(Choose_File())
+
 cur=connection.cursor()
 #cur.execute('''CREATE TABLE Runs(iD integer, Name text, Distance real, Time real, Conditions text, Temperature real, Humidity integer, Day text, HourOfDay integer, MinuteOfDay integer)''')
 #cur.execute('''DELETE FROM Runs''' )
