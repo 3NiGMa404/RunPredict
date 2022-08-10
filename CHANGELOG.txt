@@ -1,3 +1,4 @@
-CHANGELOG 09/08/2022
+CHANGELOG 10/08/2022
 
-- Added file choosing
+- Added comments and finished functionality
+- Finished!!

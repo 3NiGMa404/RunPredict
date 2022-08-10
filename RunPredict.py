@@ -11,25 +11,19 @@ import os
 import easygui
 
 
-def Choose_File():
+def Choose_File():                   #Create function to choose a .db file using the easygui fileopenbox function
     file=''
     while not file[-3:].lower()==".db":
         file=easygui.fileopenbox(filetypes=('Db files',"*.db"))
         if not file[-3:].lower()==".db":
-            messagebox.showwarning(title="File Warning", message="Please choose a .db file, exiting...")
+            messagebox.showwarning(title="File Warning", message="Please choose a .db file, exiting...")   #Exit if they don't choose a .db file
             exit()
         return file
 
-connection=sqlite3.connect(Choose_File())
+connection=sqlite3.connect(Choose_File())   #Connect to chosen .db file
 
 cur=connection.cursor()
-#cur.execute('''CREATE TABLE Runs(iD integer, Name text, Distance real, Time real, Conditions text, Temperature real, Humidity integer, Day text, HourOfDay integer, MinuteOfDay integer)''')
-#cur.execute('''DELETE FROM Runs''' )
-#connection.commit()
 
-#TIME IS UPDATING THE WRONG BOX!!!
-print([i for i in cur.execute('''SELECT * FROM Runs;''')])
-print('\n\n\n')
 window=Tk()
 window.state('zoomed')         #Define the window attributes
 window.title('RunPredict')
@@ -43,7 +37,7 @@ Edit_Button_Photo = PhotoImage(file = "Edit Button.PNG").subsample(2,2)         
 
 List_Box_Frame_1=Frame(window, highlightbackground = "black", highlightthickness = 0, bd=0,width=1)
 List_Box_Frame_2=Frame(window, highlightbackground = "black", highlightthickness = 0, bd=0,width=1)
-List_Box_Frame_3=Frame(window, highlightbackground = "black", highlightthickness = 0, bd=0,width=1)
+List_Box_Frame_3=Frame(window, highlightbackground = "black", highlightthickness = 0, bd=0,width=1)      #Create frames for the various listboxes
 List_Box_Frame_4=Frame(window, highlightbackground = "black", highlightthickness = 0, bd=0,width=1)
 
 
@@ -56,15 +50,14 @@ Weather_Var = StringVar()
 Weather_Label = Label(window, textvariable=Weather_Var,font=Label_Font,bd=0)            #Weather label text variable and data
 Weather_Var.set("Weather: ")
 
-def Quantify_Data(data):
+def Quantify_Data(data):                     #Create function to turn data from description into numbers
     Processed_Data=[]
     
     for record in data:
         processed_record=[]
         X=[0]*50
-        print("4: {}".format(record[4]))
         if record[4]=="Heavy Rain": X[0]=1
-        if record[4]=="Light Rain": X[1]=1
+        if record[4]=="Light Rain": X[1]=1    #Convert weather to numbers where a zero means it is not those conditions and a one means it is
         if record[4]=="Sunny": X[2]=1
         if record[4]=="Overcast": X[3]=1
         if record[4]=="Fog": X[4]=1
@@ -74,7 +67,7 @@ def Quantify_Data(data):
         if 5<=record[5]<10: X[7]=1
         if 10<=record[5]<15: X[8]=1
         if 15<=record[5]<20: X[9]=1
-        if 20<=record[5]<25: X[10]=1
+        if 20<=record[5]<25: X[10]=1       
         if 25<=record[5]<30: X[11]=1
         if 30<=record[5]: X[12]=1
 
@@ -95,20 +88,20 @@ def Quantify_Data(data):
         rounded_hour=(record[8] if record[9]<30 else record[8] + 1)
         for i in range(0,24):
             if rounded_hour==i:
-                X[25+i]=1
+                X[25+i]=1                                #Split the day into 24 hours, where a 1 represents the hour that the run was taken in and the rest are zeroes
         processed_record.append(X)
         processed_record.append([record[3]])
             
         Processed_Data.append(processed_record)
     return Processed_Data
 
-def UnQuantify_Data(data):
+def UnQuantify_Data(data):    #Create a function to turn numerical data back into words
     Qualified_Data=[]
     for record in data:
         X=[]
         if record[0][0]==1: X.append("Heavy Rain")
         if record[0][1]==1: X.append("Light Rain")
-        if record[0][2]==1: X.append("Sunny")
+        if record[0][2]==1: X.append("Sunny")     #Turn the zeroes and ones back into weather
         if record[0][3]==1: X.append("Overcast")
         if record[0][4]==1: X.append("Fog")
         if record[0][5]==1: X.append("Snow")
@@ -129,7 +122,7 @@ def UnQuantify_Data(data):
 
         if record[0][18]==1: X.append("Monday")
         if record[0][19]==1: X.append("Tuesday")
-        if record[0][20]==1: X.append("Wednesday")
+        if record[0][20]==1: X.append("Wednesday")     #Turn the zeroes and ones back into the days of the week
         if record[0][21]==1: X.append("Thursday")
         if record[0][22]==1: X.append("Friday")
         if record[0][23]==1: X.append("Saturday")
@@ -138,16 +131,13 @@ def UnQuantify_Data(data):
             if record[0][i]==1:
                 X.append('{}:00'.format(str(i - 25).zfill(2)))
         Qualified_Data.append(X)
-    return Qualified_Data
+    return Qualified_Data                          #Return a list containing the day, weather and time
                     
     
 
-Quant=Quantify_Data([i for i in cur.execute('''SELECT * FROM Runs;''')])
-print(Quant)
-Qual=UnQuantify_Data(Quant) 
-print(Qual)
 
-def Update_Listbox():
+
+def Update_Listbox():      #Update the listbox with the new runs when a run is added, edited or deleted
     counter=0
     List_Box.delete(0,END)
     List_Box_2.delete(0,END)
@@ -160,9 +150,9 @@ def Update_Listbox():
         List_Box_4.insert(counter,str(math.floor(item[3]/60))+":"+str(int(round(item[3]%60))).zfill(2))
         counter+=1
 Update_Listbox()
-def Onselect(event):
+def Onselect(event):                     #Run function when an item from a listbox is selected
     selected=List_Box_2.curselection()
-    if len(selected)==0:
+    if len(selected)==0:                     #When an item from a listbox is selected, change the first listbox to that selection
         selected=List_Box_3.curselection()
     if len(selected)==0:
         selected=List_Box_4.curselection()
@@ -170,7 +160,7 @@ def Onselect(event):
         List_Box.select_set(selected)
     
 List_Box_2.bind("<<ListboxSelect>>",Onselect)
-List_Box_3.bind("<<ListboxSelect>>",Onselect)
+List_Box_3.bind("<<ListboxSelect>>",Onselect)               #Bind the listboxes to the onselect function
 List_Box_4.bind("<<ListboxSelect>>",Onselect)
 
     
@@ -184,21 +174,21 @@ def Create_Predict_Window():
     Distance_Var=StringVar(value=0)
     def Predict_Time():
         Data_Raw=cur.execute('''SELECT * FROM Runs WHERE distance BETWEEN {} AND {};'''.format(float(Distance_Var.get())-0.01,float(Distance_Var.get())+0.01))
-        Data=Quantify_Data(Data_Raw)
+        Data=Quantify_Data(Data_Raw)             #Execute SQL and turn the data into 1s and 0s for regression
         X=[]
         Y=[]
         for i in Data:
-            X.append(i[0])
+            X.append(i[0])                            #Add the data to a X and Y  variables
             Y.append(i[1])
-        Regression=linear_model.LinearRegression().fit(X,Y)
-        True_Time=int(Hour_Var.get())*60+int(Minute_Var.get())
+        Regression=linear_model.LinearRegression().fit(X,Y)         #Fit the regression to X and Y variables
+        True_Time=int(Hour_Var.get())*60+int(Minute_Var.get())     #Get the time in seconds
 
         Quantified_Data=Quantify_Data([[0, ' ',float(Distance_Var.get()),True_Time,Conditions_Clicked.get(),float(Temperature_Var.get()),int(Humidity_Var.get()),Day_Clicked.get(),int(Hour_Var.get()),int(Minute_Var.get())]])
-
+                                                                                                       #Turn the data for this specific run into 1s and 0s
         Weather_Var.set("Weather: {}, {}°C, {}% Humidity".format(Conditions_Clicked.get(),Temperature_Var.get(),Humidity_Var.get()))
-        Prediction=Regression.predict([Quantified_Data[0][0]])[0][0]
+        Prediction=Regression.predict([Quantified_Data[0][0]])[0][0]                                  #Get the predicted time for this specific run
         Time_Var.set("Predicted Time: {}:{}".format(math.floor(Prediction/60),str(int(Prediction%60)).zfill(2)))
-        Day_Time_Var.set("Day and Time: "+ Day_Clicked.get() + " at " + Hour_Var.get() + ":" + Minute_Var.get())
+        Day_Time_Var.set("Day and Time: "+ Day_Clicked.get() + " at " + Hour_Var.get() + ":" + Minute_Var.get())   #Update labels and destroy window
         Distance_Var_2.set("Distance: "+str(round(float(Distance_Var.get()),2))+"km")
         Predict_Window.destroy()
         
@@ -248,14 +238,14 @@ def Create_Predict_Window():
     Predict_Predict_Button.place(x=240,y=430)
 def delete():
     List_Box_2.curselection()
-    cur.execute('DELETE FROM Runs WHERE iD = '+str(List_Box.get(List_Box.curselection())))
+    cur.execute('DELETE FROM Runs WHERE iD = '+str(List_Box.get(List_Box.curselection())))   #Function to delete runs
     connection.commit()
     Update_Listbox()
 def Create_Run_Window(add):
     if add:
         Conditions_Clicked = StringVar()
         Day_Clicked = StringVar()
-        Temperature_Var=StringVar(value=0)        #Instantiate variables
+        Temperature_Var=StringVar(value=0)        #Instantiate variables if window is in add mode
         Humidity_Var=StringVar(value=0)
         Hour_Var=StringVar(value=0)
         Minute_Var=StringVar(value=0)
@@ -267,34 +257,32 @@ def Create_Run_Window(add):
         Record=[i for i in cur.execute('''SELECT * FROM Runs;''')][List_Box.curselection()[0]]
         Conditions_Clicked = StringVar(value=Record[4])
         Day_Clicked = StringVar(value=Record[7])
-        Temperature_Var=StringVar(value=Record[5])        #Instantiate variables
+        Temperature_Var=StringVar(value=Record[5])        #Instantiate variables if window is in edit mode
         Humidity_Var=StringVar(value=Record[6])
         Hour_Var=StringVar(value=Record[8])
         Minute_Var=StringVar(value=Record[9])
         Distance_Var=StringVar(value=Record[2])
-        print("Record 3: {}".format(Record[3]))
         Time_Minute_Var=StringVar(value=math.floor(Record[3]/60))
         Time_Second_Var=StringVar(value=Record[3]%60)
         Run_Name=StringVar(value=Record[1])
     def Add():
         try:
-            New_iD = [i for i in cur.execute('''SELECT MAX(iD) FROM Runs;''')][0][0]+1
+            New_iD = [i for i in cur.execute('''SELECT MAX(iD) FROM Runs;''')][0][0]+1     #Get new ID
         except:
             New_iD = 0
         True_Time=int(Time_Minute_Var.get())*60 + int(Time_Second_Var.get())
         cur.execute('INSERT INTO Runs VALUES ({},"{}",{},{},"{}",{},{},"{}",{},{});'.format(New_iD, Run_Name.get(),Distance_Var.get(),True_Time,Conditions_Clicked.get(),Temperature_Var.get(),Humidity_Var.get(),Day_Clicked.get(),Hour_Var.get(),Minute_Var.get()))
-        connection.commit()
+        connection.commit()                                                    #Add run to SQL
         Update_Listbox()
 
-#iD integer, Name text, Distance real, Time real, Conditions text, Temperature real, Humidity integer, Day text, HourOfDay integer, MinuteOfDay integer
     def Edit():
         try:
-            New_iD = [i for i in cur.execute('''SELECT MAX(iD) FROM Runs;''')][0][0]+1
+            New_iD = [i for i in cur.execute('''SELECT MAX(iD) FROM Runs;''')][0][0]+1    #Get new ID
         except:
             New_iD = 0
         True_Time=int(Time_Minute_Var.get())*60 + int(Time_Second_Var.get())
         cur.execute('UPDATE Runs SET Name="{}",Distance={},Time={},Conditions="{}",Temperature={},Humidity={},Day="{}",HourOfDay={},MinuteOfDay={} WHERE iD={};'.format(Run_Name.get(),Distance_Var.get(),True_Time,Conditions_Clicked.get(),Temperature_Var.get(),Humidity_Var.get(),Day_Clicked.get(),Hour_Var.get(),Minute_Var.get(),New_iD))
-        connection.commit()
+        connection.commit()                    #Update SQL run
         Update_Listbox()
         
     Run_Window=Toplevel(window)
@@ -307,7 +295,7 @@ def Create_Run_Window(add):
     Run_Temperature_Label=Label(Run_Window, text="Temperature (°C): ",font=Button_Font,bd=0)
     Run_Humidity_Label=Label(Run_Window, text="Humidity (%): ",font=Button_Font,bd=0)
     Run_Day_Label=Label(Run_Window, text="Day and Time",font=Label_Font,bd=0)
-    Run_Week_Label=Label(Run_Window, text="Day of Week: ",font=Button_Font,bd=0)           #Create labels
+    Run_Week_Label=Label(Run_Window, text="Day of Week: ",font=Button_Font,bd=0)           #Create labels for the 
     Run_Time_Label=Label(Run_Window, text="Time of Day: ",font=Button_Font,bd=0)
     Run_Run_Label=Label(Run_Window, text="Run",font=Label_Font,bd=0)
     Run_Distance_Label=Label(Run_Window, text="Distance: ",font=Button_Font,bd=0)
@@ -358,7 +346,7 @@ def Create_Run_Window(add):
 
     Run_Add_Button.place(x=240,y=430)
 def add_window():
-    Create_Run_Window(True)
+    Create_Run_Window(True)              #Create run and edit windows with predefined function
 def edit_window():
     Create_Run_Window(False)
 def Create_Ideal_Window():
@@ -367,21 +355,21 @@ def Create_Ideal_Window():
         weather_types=["Heavy Rain","Light Rain","Sunny","Overcast","Fog","Snow"]
         days=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
         Data_Raw=cur.execute('''SELECT * FROM Runs WHERE distance BETWEEN {} AND {};'''.format(float(Distance_Var.get())-0.01,float(Distance_Var.get())+0.01))
-        Data=Quantify_Data(Data_Raw)
+        Data=Quantify_Data(Data_Raw)             #Turn data into 1s and 0s
         X=[]
         Y=[]
         for i in Data:
             X.append(i[0])
             Y.append(i[1])
-        Regression=linear_model.LinearRegression().fit(X,Y)
+        Regression=linear_model.LinearRegression().fit(X,Y)    #Fit regression to X and Y variables
 
-        Coef=list(Regression.coef_[0])       
+        Coef=list(Regression.coef_[0])                   #Get the list of coefficients    
 
         Weather_Coef=Coef[0:5]
         
-        for i in range(len(Weather_Coef)):
-            if Weather_Coef[i] == 0:
-                Weather_Coef[i] = 100
+        for i in range(len(Weather_Coef)):                   # For each set of coefficients (weather, temperature, humidity, time of day and day of week,
+            if Weather_Coef[i] == 0:                         # find the minimum coefficient (that is the one that lowers the predicted time by the most)
+                Weather_Coef[i] = 100                        # and create an "ideal" variable with the data point attributed to that coefficient
         Ideal_Weather=weather_types[Weather_Coef.index(min(Weather_Coef))]
         
         Temperature_Coef=Coef[6:12]
@@ -396,7 +384,7 @@ def Create_Ideal_Window():
                 Humidity_Coef[i] = 100
         Ideal_Humidity=(Humidity_Coef.index(min(Humidity_Coef))+1)*20 - 10
 
-        Weather_Ideal_Var.set("Weather: {}, {}°C, {}% Humidity".format(Ideal_Weather,Ideal_Temperature,Ideal_Humidity))
+        Weather_Ideal_Var.set("Weather: {}, {}°C, {}% Humidity".format(Ideal_Weather,Ideal_Temperature,Ideal_Humidity))    #Update weather label
 
         Days_Coef=Coef[18:24]
         for i in range(len(Days_Coef)):
@@ -410,7 +398,7 @@ def Create_Ideal_Window():
                 Time_Coef[i] = 100
         Ideal_Time=Time_Coef.index(min(Time_Coef))
         
-        Day_Time_Ideal_Var.set("Day and Time: {} at {}:00".format(Ideal_Day,Ideal_Time))
+        Day_Time_Ideal_Var.set("Day and Time: {} at {}:00".format(Ideal_Day,Ideal_Time))     #Update day and time labels
         
     
     Ideal_Window=Toplevel(window)
@@ -485,28 +473,28 @@ Delete_Button=Button(Delete_Button_Border,text="Delete",font=Button_Font,bg='#f9
 Edit_Button_Border.grid(row=0,column=0)
 Add_Button_Border.grid(row=0,column=1)
 Delete_Button_Border.grid(row=0,column=2)
-Blank_Box=Label(Scrollbox,height=10,width=1)
+Blank_Box=Label(Scrollbox,height=10,width=1)           #Place edit, add and delete buttons 
 Scrollbox.place(x=1150,y=100)
 Blank_Box.grid(row=0,column=1)
 
 scrollbar.grid(row=0,column=0,sticky=NS)
 List_Box.config(yscrollcommand = scrollbar.set)
-List_Box_2.config(yscrollcommand = scrollbar.set)
+List_Box_2.config(yscrollcommand = scrollbar.set)        #Set each list box to be based off the same scroll bar
 List_Box_3.config(yscrollcommand = scrollbar.set)
 List_Box_4.config(yscrollcommand = scrollbar.set)
 def multiple_yview(*args):
     List_Box.yview(*args)
-    List_Box_2.yview(*args)
+    List_Box_2.yview(*args)                  #Change the yview (scroll amount) of all listboxes with one function
     List_Box_3.yview(*args)
     List_Box_4.yview(*args)
     
-scrollbar.config(command = multiple_yview)
+scrollbar.config(command = multiple_yview)        #Connect scrollbar to listboxrd
 List_Box_Frame_1.place(x=800,y=100)
-List_Box_Frame_2.place(x=850,y=100)
+List_Box_Frame_2.place(x=850,y=100)        #Place list box frames
 List_Box_Frame_3.place(x=950,y=100)
 List_Box_Frame_4.place(x=1050,y=100)
 List_Box.pack()
-List_Box_2.pack()
+List_Box_2.pack()                             #Place list boxes using pack method
 List_Box_3.pack()
 List_Box_4.pack()
 
@@ -525,6 +513,6 @@ Ideal_Button.pack()
 Edit_Button.pack()
 Add_Button.pack()
 Time_Button.pack()
-window.mainloop()
+window.mainloop()             #Run the program
 
 #Existence check, Type Check, Range Check, Limited Choices
