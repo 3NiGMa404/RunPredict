@@ -358,8 +358,10 @@ def Create_Run_Window(add):
         Time_Second_Var = StringVar(value=0)
         Run_Name = StringVar()
     else:
-        Record = [i for i in cur.execute(
-            '''SELECT * FROM Runs;''')][List_Box.curselection()[0]]
+        try:
+            Record = [i for i in cur.execute('''SELECT * FROM Runs;''')][List_Box.curselection()[0]]
+        except:
+            Record = [i for i in cur.execute('''SELECT * FROM Runs;''')][0]   #Range check
         Conditions_Clicked = StringVar(value=Record[4])
         Day_Clicked = StringVar(value=Record[7])
         # Instantiate variables if window is in edit mode
@@ -378,11 +380,15 @@ def Create_Run_Window(add):
                 '''SELECT MAX(iD) FROM Runs;''')][0][0]+1  # Get new ID
         except:
             New_iD = 0
-        True_Time = int(Time_Minute_Var.get())*60 + int(Time_Second_Var.get())
-        cur.execute('INSERT INTO Runs VALUES ({},"{}",{},{},"{}",{},{},"{}",{},{});'.format(New_iD, Run_Name.get(), Distance_Var.get(
-        ), True_Time, Conditions_Clicked.get(), Temperature_Var.get(), Humidity_Var.get(), Day_Clicked.get(), Hour_Var.get(), Minute_Var.get()))
-        connection.commit()  # Add run to SQL
-        Update_Listbox()
+        try:                                               #Existence and type check
+            True_Time = int(Time_Minute_Var.get())*60 + int(Time_Second_Var.get())
+            cur.execute('INSERT INTO Runs VALUES ({},"{}",{},{},"{}",{},{},"{}",{},{});'.format(New_iD, Run_Name.get(), float(Distance_Var.get(
+            )), True_Time, str(Conditions_Clicked.get()), float(Temperature_Var.get()), float(Humidity_Var.get()), str(Day_Clicked.get()), int(Hour_Var.get()), int(Minute_Var.get())))
+            connection.commit()  # Add run to SQL
+            Update_Listbox()
+        except:
+            messagebox.showwarning(title="Empty or Invalid Fields", message="Please fill in all fields with appropriate values")
+            
 
     def Edit():
         try:
@@ -390,11 +396,14 @@ def Create_Run_Window(add):
                 '''SELECT MAX(iD) FROM Runs;''')][0][0]+1  # Get new ID
         except:
             New_iD = 0
-        True_Time = int(Time_Minute_Var.get())*60 + int(Time_Second_Var.get())
-        cur.execute('UPDATE Runs SET Name="{}",Distance={},Time={},Conditions="{}",Temperature={},Humidity={},Day="{}",HourOfDay={},MinuteOfDay={} WHERE iD={};'.format(
-            Run_Name.get(), Distance_Var.get(), True_Time, Conditions_Clicked.get(), Temperature_Var.get(), Humidity_Var.get(), Day_Clicked.get(), Hour_Var.get(), Minute_Var.get(), New_iD))
-        connection.commit()  # Update SQL run
-        Update_Listbox()
+        try:
+            True_Time = int(Time_Minute_Var.get())*60 + int(Time_Second_Var.get())
+            cur.execute('UPDATE Runs SET Name="{}",Distance={},Time={},Conditions="{}",Temperature={},Humidity={},Day="{}",HourOfDay={},MinuteOfDay={} WHERE iD={};'.format(
+                 Run_Name.get(), float(Distance_Var.get()), True_Time, str(Conditions_Clicked.get()), float(Temperature_Var.get()), float(Humidity_Var.get()), Day_Clicked.get(), int(Hour_Var.get()), int(Minute_Var.get()), New_iD))
+            connection.commit()  # Update SQL run
+            Update_Listbox()
+        except:
+            messagebox.showwarning(title="Empty or Invalid Fields", message="Please fill in all fields with appropriate values")  #Existence and type check
 
     Run_Window = Toplevel(window)
     # Create the run adding window and attributes
@@ -432,7 +441,7 @@ def Create_Run_Window(add):
     Run_Temperature_Input = Spinbox(
         Run_Window, textvariable=Temperature_Var, from_=0, to=60)
     Run_Humidity_Input = Spinbox(
-        Run_Window, textvariable=Humidity_Var, from_=0, to=100)
+        Run_Window, textvariable=Humidity_Var, from_=0, to=100)                      #Range check, only values between 0 and 100 or 0 and 60 are allowed
     Run_Hour_Input = Spinbox(Run_Window, textvariable=Hour_Var,
                              from_=0, to=23, width=4, format='%02.0f')  # Create inputs
     Run_Minute_Input = Spinbox(
